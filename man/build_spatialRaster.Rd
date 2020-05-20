@@ -5,26 +5,26 @@
 \title{Build spatialRaster node}
 \usage{
 build_spatialRaster(
-  rasterFname,
-  rasterDesc,
-  rasterGeoDesc,
+  spatial.raster,
+  spatial.raster.name,
+  spatial.raster.description,
+  spatial.raster.geographic.description,
   rasterAttributes,
-  rasterFactors = NULL,
-  baseURL = ""
+  rasterFactors = NULL
 )
 }
 \arguments{
-\item{rasterFname}{(character) Full file path}
+\item{spatial.raster}{(character) Full file path}
 
-\item{rasterDesc}{(character) Free-text descr. of raster}
+\item{spatial.raster.name}{(character) Name of \code{spatial.raster}}
 
-\item{rasterGeoDesc}{(character) Raster geographic coverage}
+\item{spatial.raster.description}{(character) Description of \code{spatial.raster}}
+
+\item{spatial.raster.geographic.description}{(character) Raster geographic coverage}
 
 \item{rasterAttributes}{(data.frame) Attributes table}
 
 \item{rasterFactors}{(data.frame) Factor codes table}
-
-\item{baseURL}{(character) Public URL of raster file}
 }
 \value{
 (emld; list) EML spatialRaster node
@@ -49,9 +49,9 @@ raster.factor <- data.frame(
   definition = unname(covercode))
 
 build_spatialRaster(
-  rasterFname = "C:/Users/Colin/Documents/EDI/data_sets/fix_15/data_objects/shrub_cover.tif", 
-  rasterDesc = "1-hectare JER-CDRRC shrub cover geotiff (cover fraction from 0 to 1)", 
-  rasterGeoDesc = "JER and CDRRC, southern New Mexico", 
+  spatial.raster = "C:/Users/Colin/Documents/EDI/data_sets/fix_15/data_objects/shrub_cover.tif", 
+  spatial.raster.description = "1-hectare JER-CDRRC shrub cover geotiff (cover fraction from 0 to 1)", 
+  spatial.raster.geographic.description = "JER and CDRRC, southern New Mexico", 
   rasterAttributes = raster.attribs, 
   rasterFactors = raster.factor,
   baseURL = "https://jornada-ldc2.jrn.nmsu.edu/tif/")

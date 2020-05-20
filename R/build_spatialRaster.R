@@ -1,17 +1,17 @@
 #' Build spatialRaster node
 #'
-#' @param rasterFname
+#' @param spatial.raster
 #'     (character) Full file path
-#' @param rasterDesc 
-#'     (character) Free-text descr. of raster
-#' @param rasterGeoDesc 
+#' @param spatial.raster.name 
+#'     (character) Name of \code{spatial.raster}
+#' @param spatial.raster.description 
+#'     (character) Description of \code{spatial.raster}
+#' @param spatial.raster.geographic.description 
 #'     (character) Raster geographic coverage
 #' @param rasterAttributes 
 #'     (data.frame) Attributes table
 #' @param rasterFactors 
 #'     (data.frame) Factor codes table
-#' @param baseURL 
-#'     (character) Public URL of raster file
 #'
 #' @return
 #'     (emld; list) EML spatialRaster node
@@ -35,32 +35,34 @@
 #'   definition = unname(covercode))
 #' 
 #' build_spatialRaster(
-#'   rasterFname = "C:/Users/Colin/Documents/EDI/data_sets/fix_15/data_objects/shrub_cover.tif", 
-#'   rasterDesc = "1-hectare JER-CDRRC shrub cover geotiff (cover fraction from 0 to 1)", 
-#'   rasterGeoDesc = "JER and CDRRC, southern New Mexico", 
+#'   spatial.raster = "C:/Users/Colin/Documents/EDI/data_sets/fix_15/data_objects/shrub_cover.tif", 
+#'   spatial.raster.description = "1-hectare JER-CDRRC shrub cover geotiff (cover fraction from 0 to 1)", 
+#'   spatial.raster.geographic.description = "JER and CDRRC, southern New Mexico", 
 #'   rasterAttributes = raster.attribs, 
 #'   rasterFactors = raster.factor,
 #'   baseURL = "https://jornada-ldc2.jrn.nmsu.edu/tif/")
 #' 
 build_spatialRaster <- function(
-  rasterFname,
-  rasterDesc,
-  rasterGeoDesc,
+  spatial.raster,
+  spatial.raster.name,
+  spatial.raster.description,
+  spatial.raster.geographic.description,
   rasterAttributes,
-  rasterFactors=NULL,
-  baseURL=""){
+  rasterFactors = NULL){
   
-  # Load raster ---------------------------------------------------------------
+  # Read data -----------------------------------------------------------------
+  # TODO: Move to template_arguments()
   
-  rasterObject <- raster::raster(rasterFname)
+  rasterObject <- raster::raster(spatial.raster)
   
   # Get spatial reference and convert to EML standard--------------------------
   
-  browser()
-  
   # First read the proj4 string
-  proj4str <- crs(rasterObject, asText=TRUE)[[1]]
+  # Read: https://www.nceas.ucsb.edu/sites/default/files/2020-04/OverviewCoordinateReferenceSystems.pdf
+  proj4str <- raster::crs(rasterObject, asText = T)
   print(paste('Spatial reference in proj4 format is:', proj4str))
+  
+  # browser()
   
   # Assign EML-compliant name - a manually determined translation of proj4str
   # Allowed values for EML seem to be enumerated here: 
@@ -84,7 +86,7 @@ build_spatialRaster <- function(
   extent.geo <- sp::spTransform(extent, CRS("+proj=longlat +datum=WGS84 +no_defs 
                                             +ellps=WGS84 +towgs84=0,0,0"))
   print('Determining spatial coverage...')
-  spatialCoverage <- EML::set_coverage(geographicDescription = rasterGeoDesc,
+  spatialCoverage <- EML::set_coverage(geographicDescription = spatial.raster.geographic.description,
                                        west = extent.geo@bbox["x", "min"],
                                        east = extent.geo@bbox["x", "max"],
                                        north = extent.geo@bbox["y", "max"],
@@ -138,25 +140,25 @@ build_spatialRaster <- function(
   # set authentication (md5)---------------------------------------------------
   print('Calculating MD5 sum...')
   fileAuthentication <- EML::eml$authentication(method = "MD5")
-  fileAuthentication$authentication <- md5sum(rasterFname)
+  fileAuthentication$authentication <- md5sum(spatial.raster)
   
   
   # set file size--------------------------------------------------------------
   fileSize <- EML::eml$size(unit = "byte")
-  fileSize$size <- deparse(file.size(rasterFname))
+  fileSize$size <- deparse(file.size(spatial.raster))
   
   
   # set file format------------------------------------------------------------
   fileDataFormat <- EML::eml$dataFormat(
     externallyDefinedFormat=EML::eml$externallyDefinedFormat(
-      formatName=file_ext(rasterFname))
+      formatName=file_ext(spatial.raster))
   )
   
   # Create rasterPhysical pieces-----------------------------------------------
-  rasterBaseName <- basename(rasterFname)
-  directoryName <- dirname(rasterFname)
+  rasterBaseName <- basename(spatial.raster)
+  directoryName <- dirname(spatial.raster)
   directoryNameFull <- sub("/$", "", path.expand(directoryName))
-  pathToFile <- path.expand(rasterFname)
+  pathToFile <- path.expand(spatial.raster)
   
   # set distribution
   fileDistribution <- EML::eml$distribution(
@@ -177,7 +179,7 @@ build_spatialRaster <- function(
   print('Building spatialRaster entity...')
   newSR <- EML::eml$spatialRaster(
     entityName = rasterBaseName,
-    entityDescription = rasterDesc,
+    entityDescription = spatial.raster.description,
     physical = spatialRasterPhysical,
     coverage = spatialCoverage,
     additionalInfo = projections,
