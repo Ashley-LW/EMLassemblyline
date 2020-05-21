@@ -2,7 +2,9 @@
 
 export(build_spatialRaster)
 export(define_catvars)
+export(eml_get_raster_metadata)
 export(extract_geocoverage)
+export(get_coord_list)
 export(import_templates)
 export(make_eml)
 export(template_arguments)
