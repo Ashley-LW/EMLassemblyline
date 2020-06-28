@@ -59,7 +59,6 @@ build_spatialRaster <- function(
   
   # First read the proj4 string
   proj4str <- raster::crs(rasterObject, asText = T)
-  print(paste('Spatial reference in proj4 format is:', proj4str))
   
   # Assign EML-compliant name - a manually determined translation of proj4str
   # Allowed values for EML seem to be enumerated here: 
@@ -71,23 +70,39 @@ build_spatialRaster <- function(
   # TODO: Do values outside the emlProjection invalidate the EML?
   # TODO: How were the enumerated emlProject values created?
   
-  # Get EML coordinate list
-  eml_horizCoordSysDef <- get_coord_list()
-  
   # browser()
   
-  # TODO: Add this to template_spatial_raster_attributes() so the ESRIWKT
-  # value can be manually added if spatialreference.org is offline
-  #
-  # Get mapping between EPSG projection codes and proj4
+  # Create geocode map --------------------------------------------------------
+  # TODO: Create map between proj4 code, EPSG, and GEOGCS (ESRIWKT? and EML 
+  # SpatialReferenceType/horizCoordSysName) then add to package /inst. This 
+  # allows mapping when user is offline.
+  
+  # Get EML coordinate list
+  eml_horizCoordSysDef <- get_coord_list()
+  # Get mapping between EPSG (European Petroleum Survey Group) projection 
+  # codes and proj4 codes
   epsg <- rgdal::make_EPSG()
+  epsg <- epsg[!is.na(epsg$code), ]
+  
+  
   # Get EPSG for proj4
-  use_i <- !is.na(epsg$prj4) & (epsg$prj4 == proj4str)
-  # Convert EPSG to ESRIWKT
-  r <- httr::GET(
-    url = "https://spatialreference.org/ref/epsg/4326/esriwkt/")
-  output <- httr::content(r, as = 'text', encoding = 'UTF-8')
-  # Extract GEOGCS from ESRIWKT
+  # use_i <- !is.na(epsg$prj4) & (epsg$prj4 == proj4str)
+  
+  # Resolve EPSG codes to ESRIWKT values used by EML
+  test <- lapply(
+    epsg$code,
+    function(x) {
+      message("Getting GEOGCS and DATUM for EPSG code ", x)
+      r <- httr::GET(
+        url = paste0("https://spatialreference.org/ref/epsg/", x, "/esriwkt/"))
+      txt <- httr::content(r, as = 'text', encoding = 'UTF-8')
+      c(
+        GEOGCS = stringr::str_remove_all(
+          stringr::str_extract(txt, "(?<=GEOGCS\\[).*(?=,DATUM)"), "\""),
+        DATUM = stringr::str_remove_all(
+          stringr::str_extract(txt, "(?<=DATUM\\[).*(?=,SPHEROID)"), "\""))
+    })
+  # TODO: Add epsg to output and write to file
 
   proj <- rgdal::projInfo("proj")
   datum <- rgdal::projInfo("datum")
