@@ -102,7 +102,13 @@ build_spatialRaster <- function(
         DATUM = stringr::str_remove_all(
           stringr::str_extract(txt, "(?<=DATUM\\[).*(?=,SPHEROID)"), "\""))
     })
-  # TODO: Add epsg to output and write to file
+  df <- dplyr::rbind_list(test)
+  df$epsg_code <- epsg$code
+  # TODO: Are all ref systems of EML in df?
+  eml_horizCoordSysDef$horizCoordSysDef[1]
+  
+  
+  # 
 
   proj <- rgdal::projInfo("proj")
   datum <- rgdal::projInfo("datum")
