@@ -85,7 +85,7 @@ build_spatialRaster <- function(
   epsg <- epsg[!is.na(epsg$code), ]
   
   
-  # Get EPSG for proj4
+  # Get EPSG for proj4 (attempt 1) --------------------------------------------
   # use_i <- !is.na(epsg$prj4) & (epsg$prj4 == proj4str)
   
   # Resolve EPSG codes to ESRIWKT values used by EML
@@ -105,11 +105,70 @@ build_spatialRaster <- function(
   df <- dplyr::rbind_list(test)
   df$epsg_code <- epsg$code
   # TODO: Are all ref systems of EML in df?
-  eml_horizCoordSysDef$horizCoordSysDef[1]
+  use_i <- eml_horizCoordSysDef$horizCoordSysDef %in% df$GEOGCS
+  use_i <- df$GEOGCS %in% eml_horizCoordSysDef$horizCoordSysDef
+  sum(use_i)
   
   
-  # 
+  # Get EPSG for proj4 (attempt 2) --------------------------------------------
+  # Get proj4 from ESRI references at spatialreference.org
+  #
+  # A mix of sources?
+  use_i <- df$GEOGCS %in% eml_horizCoordSysDef$horizCoordSysDef
+  sum(use_i) # 740 matches among a total of 2004
+  # An estimate of matches from spatialreference.org's ESRI resource = 447 (these
+  # appear to be direct matches where the underscores in the EML dictionary 
+  # are replaced with spaces to match the ESRI resources)
+  
+  # List number of pages from which to get ESRI numeric code and corresponding Coordinate System name
+  page_exists <- TRUE
+  page_n <- 1
+  while (isTRUE(page_exists)) {
+    page_n <- page_n + 1
+    message(page_n)
+    r <- httr::GET(
+      url = paste0("https://spatialreference.org/ref/esri/?page=", page_n))
+    txt <- httr::content(r, as = 'parsed', encoding = 'UTF-8')
+    if (any(xml2::xml_text(xml2::xml_find_all(txt, ".//p")) == "No results found.")) {
+      page_exists <- FALSE
+    } else {
+      # From each page extract the name and numeric code
+      page_list <- xml2::xml_text(
+        xml2::xml_find_all(txt, ".//li"))
+      # RESUME dev here
+    }
+  }
+  
+  
 
+  
+  test <- lapply(
+    epsg$code,
+    function(x) {
+      message("Getting GEOGCS and DATUM for EPSG code ", x)
+      r <- httr::GET(
+        url = "https://spatialreference.org/ref/esri/37001/proj4/")
+      txt <- httr::content(r, as = 'text', encoding = 'UTF-8')
+      c(
+        GEOGCS = stringr::str_remove_all(
+          stringr::str_extract(txt, "(?<=GEOGCS\\[).*(?=,DATUM)"), "\""),
+        DATUM = stringr::str_remove_all(
+          stringr::str_extract(txt, "(?<=DATUM\\[).*(?=,SPHEROID)"), "\""))
+    })
+  df <- dplyr::rbind_list(test)
+  df$epsg_code <- epsg$code
+  # TODO: Are all ref systems of EML in df?
+  use_i <- eml_horizCoordSysDef$horizCoordSysDef %in% df$GEOGCS
+  use_i <- df$GEOGCS %in% eml_horizCoordSysDef$horizCoordSysDef
+  sum(use_i)
+  
+  # ---------------------------------------------------------------------------
+
+  # TODO: Add the EML spatial reference dictionary to EMLassemblyline as
+  # view_spatial_reference_dictionary()
+  
+  # ---------------------------------------------------------------------------
+  
   proj <- rgdal::projInfo("proj")
   datum <- rgdal::projInfo("datum")
   ellps <- rgdal::projInfo("ellps")
