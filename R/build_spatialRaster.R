@@ -110,8 +110,8 @@ build_spatialRaster <- function(
   sum(use_i)
   
   
-  # Get EPSG for proj4 (attempt 2) --------------------------------------------
-  # Get proj4 from ESRI references at spatialreference.org
+  # Harvest data from spatialreference.org -------------------------------------------
+  # Get ESRI name and corresponding proj4
   #
   # A mix of sources?
   use_i <- df$GEOGCS %in% eml_horizCoordSysDef$horizCoordSysDef
@@ -120,25 +120,38 @@ build_spatialRaster <- function(
   # appear to be direct matches where the underscores in the EML dictionary 
   # are replaced with spaces to match the ESRI resources)
   
-  # List number of pages from which to get ESRI numeric code and corresponding Coordinate System name
-  page_exists <- TRUE
-  page_n <- 1
-  while (isTRUE(page_exists)) {
-    page_n <- page_n + 1
-    message(page_n)
-    r <- httr::GET(
-      url = paste0("https://spatialreference.org/ref/esri/?page=", page_n))
-    txt <- httr::content(r, as = 'parsed', encoding = 'UTF-8')
-    if (any(xml2::xml_text(xml2::xml_find_all(txt, ".//p")) == "No results found.")) {
-      page_exists <- FALSE
-    } else {
-      # From each page extract the name and numeric code
-      page_list <- xml2::xml_text(
-        xml2::xml_find_all(txt, ".//li"))
-      # RESUME dev here
+  get_spatialreference_org <- function() {
+    message("Searching spatialreference.org")
+    o <- list()
+    n <- 1
+    continue <- TRUE
+    while (isTRUE(continue)) {
+      r <- httr::GET(
+        url = paste0("https://spatialreference.org/ref/esri/?page=", n))
+      txt <- httr::content(r, as = 'parsed', encoding = 'UTF-8')
+      if (any(xml2::xml_text(xml2::xml_find_all(txt, ".//p")) == 
+              "No results found.")) {
+        continue <- FALSE
+      } else {
+        esri_proj4 <- lapply(
+          xml2::xml_text(xml2::xml_find_all(txt, ".//li")),
+          function(x) {
+            code <- stringr::str_extract(x, "(?<=:).*(?=:)")
+            name <- stringr::str_extract(x, "(?<=:[:blank:]).*")
+            r <- httr::GET(
+              url = paste0(
+                "https://spatialreference.org/ref/esri/", code, "/proj4/"))
+            txt <- httr::content(r, as = 'text', encoding = 'UTF-8')
+            list(esri = name, proj4 = txt)
+          })
+        o <- c(o, esri_proj4)
+        n <- n + 1
+      }
     }
+    o <- data.table::rbindlist(o)
+    o[o$proj4 != "", ]
   }
-  
+  s1 <- get_spatialreference_org()
   
 
   
