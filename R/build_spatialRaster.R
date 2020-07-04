@@ -359,7 +359,11 @@ create_spatialReferenceDictionary <- function() {
       
       # Parse content ---------------------------------------------------------
       
-      # horizCoordSysDef
+      # TODO: Parse EML spatialReferenceDictionary.xml into unique tags+attributes
+      # to validate that all variables are being parsed from spatialreference.org
+      
+      # projcs - The source of the horizCoordSysDef string in the EML 
+      # spatialReferenceDictionary.xml
       projcs <- stringr::str_extract(txt, '(?<=PROJCS\\[").*?(?=")')
       # geogCoordSys
       geogcs <- stringr::str_extract(txt, '(?<=GEOGCS\\[").*?(?=")')
@@ -381,12 +385,53 @@ create_spatialReferenceDictionary <- function() {
         stringr::str_extract(txt, '(?<=UNIT\\[).*?(?=\\])'), ","))
       unit_name <- stringr::str_to_lower(
         stringr::str_remove_all(unit[1], '\"'))
-      
+      # projection
+      projection_name <- unlist(stringr::str_remove_all(
+        stringr::str_extract(txt, '(?<=PROJECTION\\[).*?(?=\\])'), '"'))
+      projection_parameter_name_value <- lapply(
+        unlist(stringr::str_split(
+          stringr::str_extract(
+            txt, '(?<=PROJECTION\\[.{1,1000}\\],).*(?=,UNIT\\[)'), 
+          ',PARAMETER')),
+        function(x) {
+          txt <- unlist(
+            stringr::str_split(
+              stringr::str_remove_all(
+                stringr::str_extract(
+                x,
+                '(?<=\\[").*(?=])'),
+                '"'),
+              ","))
+          c(
+            stringr::str_replace_all(
+              stringr::str_to_title(
+                stringr::str_replace_all(txt[1], "_", " ")
+                ),
+              " ", "_"),
+            txt[2])})
+      projection_unit_name <- stringr::str_to_lower(
+        stringr::str_extract(
+          txt, '(?<=PROJECTION\\[.{1,10000}UNIT\\[").*(?=",)'))
+
       # Construct XML ---------------------------------------------------------
       # Translate to EML spatial reference dictionary .xml. This is a best attempt 
       # because rules for constructing EML  horizCoordSysDef, geogCoordSys
       # and dataum appear a bit arbitrary and unclear.
       
+      # TODO: Find string matching library for quantifying a match (e.g. 
+      # horizCoordSysDef, and non-order matching)
+      
     })
   
 }
+
+
+
+
+
+
+
+
+
+
+
