@@ -44,54 +44,81 @@ testthat::test_that("attributes.txt", {
     data.table = c("decomp.csv", "nitrogen.csv"),
     other.entity = c("ancillary_data.zip", "processing_and_analysis.R"))$x
   x1 <- x
+  
   expect_equivalent(validate_templates("make_eml", x1), x1)
   
-  # attributes.txt - attributes.txt should be present for each data table
+  # attributes.txt - attributes metadata are required for each data table
   
   x1 <- x
   x1$template$attributes_decomp.txt <- NULL
+  x1$template$attributes_nitrogen.txt <- NULL
+  
   expect_warning(
     validate_templates("make_eml", x1),
-    regexp = "is missing attributes metadata.")
+    regexp = paste0(
+      ""))
+  r <- suppressWarnings(validate_templates("make_eml", x1))
+  expect_null(r$data.table$decomp.csv)
   
-  # attributeName - All table columns are listed as attributeName
-  
-  x1 <- x
-  x1$template$attributes_decomp.txt$content <- x1$template$attributes_decomp.txt$content[1:2, ]
-  x1$template$attributes_nitrogen.txt$content <- x1$template$attributes_nitrogen.txt$content[1:2, ]
-  expect_error(validate_templates("make_eml", x1))
-  
-  # attributeName - Names follow best practices
+  # attributeName - All columns of a table are required
   
   x1 <- x
-  n <- stringr::str_replace(names(x1$data.table$decomp.csv$content), "_", " ")
-  n <- stringr::str_replace(n, "t", "%")
-  names(x1$data.table$decomp.csv$content) <- n
-  x1$template$attributes_decomp.txt$content$attributeName <- n
-  expect_warning(validate_templates("make_eml", x1))
+  x1$template$attributes_decomp.txt$content <- 
+    x1$template$attributes_decomp.txt$content[1:2, ]
+  
+  expect_warning(
+    validate_templates("make_eml", x1),
+    regexp = paste0(
+      "Missing attribute names \\(required\\). decomp.csv has column names ",
+      "\\(attribute names\\) that are unlisted in the attributes ",
+      "metadata: arm, ntrt, year, percent_loss, taxa. decomp.csv is being ",
+      "dropped from the EML."))
+  r <- suppressWarnings(validate_templates("make_eml", x1))
+  expect_null(r$data.table$decomp.csv)
   
   # definition- Each attribute has a definition
   
   x1 <- x
   x1$template$attributes_decomp.txt$content$attributeDefinition[1] <- ""
-  x1$template$attributes_nitrogen.txt$content$attributeDefinition[1] <- ""
-  expect_error(validate_templates("make_eml", x1))
+  
+  expect_warning(
+    validate_templates("make_eml", x1),
+    regexp = paste0(
+      "Missing attribute definitions \\(required\\). decomp.csv has missing ",
+      "definitions for these attributes: type. decomp.csv is being dropped ",
+      "from the EML."))
+  r <- suppressWarnings(validate_templates("make_eml", x1))
+  expect_null(r$data.table$decomp.csv)
   
   # class - Each attribute has a class
   
   x1 <- x
-  x1$template$attributes_decomp.txt$content$class[1] <- ""
-  x1$template$attributes_nitrogen.txt$content$class[1] <- ""
-  expect_error(validate_templates("make_eml", x1))
+  x1$template$attributes_decomp.txt$content$class[1:2] <- ""
   
-  # class - Each class is numeric, Date, character, or categorical
+  expect_warning(
+    validate_templates("make_eml", x1),
+    regexp = paste0(
+      "Missing attribute classes \\(required\\). decomp.csv has missing classes ",
+      "for these attributes: type, date. decomp.csv is being dropped from ",
+      "the EML."))
+  r <- suppressWarnings(validate_templates("make_eml", x1))
+  expect_null(r$data.table$decomp.csv)
+  
+  # TODO: class - Each class is numeric, Date, character, or categorical
   
   x1 <- x
   x1$template$attributes_decomp.txt$content$class[1] <- "dateagorical"
-  x1$template$attributes_nitrogen.txt$content$class[1] <- "numerecter"
-  expect_error(validate_templates("make_eml", x1))
   
-  # class - Each Date class has a dateTimeformatString
+  expect_warning(
+    validate_templates("make_eml", x1),
+    regexp = paste0(
+      "Missing attribute classes \\(required\\). decomp.csv has missing classes ",
+      "for these attributes: type, date. decomp.csv is being dropped from ",
+      "the EML."))
+  r <- suppressWarnings(validate_templates("make_eml", x1))
+  expect_null(r$data.table$decomp.csv)
+  
+  # TODO: class - Each Date class has a dateTimeformatString
   
   x1 <- x
   x1$template$attributes_decomp.txt$content$dateTimeFormatString[
@@ -99,7 +126,7 @@ testthat::test_that("attributes.txt", {
     ] <- ""
   expect_error(validate_templates("make_eml", x1))
   
-  # class - Attributes specified by the user as numeric should contain no 
+  # TODO: class - Attributes specified by the user as numeric should contain no 
   # characters other than listed under missingValueCode of the table 
   # attributes template.
   
@@ -131,13 +158,13 @@ testthat::test_that("attributes.txt", {
       x1$template$attributes_nitrogen.txt$content$unit[i] == "")
   }
   
-  # unit - Numeric classed attributes have units
+  # TODO: unit - Numeric classed attributes have units
   
   x1 <- x
   x1$template$attributes_decomp.txt$content$unit[6] <- ""
   expect_error(validate_templates("make_eml", x1))
   
-  # unit - Units should be from the dictionary or defined in custom_units.txt
+  # TODO: unit - Units should be from the dictionary or defined in custom_units.txt
   
   x1 <- x
   x1$template$attributes_nitrogen.txt$content$unit[5] <- "an_undefined_unit"
@@ -152,7 +179,7 @@ testthat::test_that("attributes.txt", {
     "a multiplier", "and a description")
   expect_equivalent(validate_templates("make_eml", x1), x1)
   
-  # dateTimeFormatString- Remaining dateTimeFormatString prompts have been removed
+  # TODO: dateTimeFormatString- Remaining dateTimeFormatString prompts have been removed
   
   x1 <- x
   x1$template$attributes_decomp.txt$content$dateTimeFormatString[1] <- 
@@ -161,21 +188,21 @@ testthat::test_that("attributes.txt", {
     "!Add datetime specifier here!"
   expect_error(validate_templates("make_eml", x1))
   
-  # missingValueCode - Each missingValueCode has a missingValueCodeExplanation
+  # TODO: missingValueCode - Each missingValueCode has a missingValueCodeExplanation
   
   x1 <- x
   x1$template$attributes_decomp.txt$content$missingValueCodeExplanation[1] <- ""
   x1$template$attributes_nitrogen.txt$content$missingValueCodeExplanation[1] <- ""
   expect_error(validate_templates("make_eml", x1))
   
-  # missingValueCode - Each missingValueCode only has 1 entry per column
+  # TODO: missingValueCode - Each missingValueCode only has 1 entry per column
   
   x1 <- x
   x1$template$attributes_decomp.txt$content$missingValueCode[1] <- "NA, -99999"
   x1$template$attributes_nitrogen.txt$content$missingValueCode[1] <- "NA -99999"
   expect_error(validate_templates("make_eml", x1))
   
-  # missingValueCodeExplanation - Each missingValueCodeExplanation has a 
+  # TODO: missingValueCodeExplanation - Each missingValueCodeExplanation has a 
   # non-blank missingValueCode
   
   x1 <- x
