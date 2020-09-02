@@ -16,31 +16,31 @@ validate_templates <- function(fun.name, x){
   
   # Parameterize --------------------------------------------------------------
   
+  # TODO: Add this to each function and remove from here when done
   attr_tmp <- read_template_attributes()
   
   if (fun.name == 'make_eml'){
+    
+    # All issues are compiled into a single report returned to the user with
+    # a warning. This approach of not "failing fast" allows the user to address
+    # all issues at once.
+    
+    # Initialize object for collecting issue messages
+    
+    issues <- c()
 
     # make_eml() - abstract ---------------------------------------------------
-    
-    # Missing
-    
-    missing_abstract <- !any(
-      stringr::str_detect(
-        names(x$template), 
-        attr_tmp$regexpr[attr_tmp$template_name == "abstract"]))
-    if (isTRUE(missing_abstract)) {
-      warning("An abstract is recommended.", call. = FALSE)
-    }
 
-    # FIXME: Report non-utf-8 encoded characters (generalize this function for 
-    # TextType templates)
+    r <- validate_abstract(x)
+    issues <- c(issues, r)
+    browser()
     
     # make_eml() - additional_info --------------------------------------------
     
     # FIXME: Report non-utf-8 encoded characters (generalize this function for 
     # TextType templates)
     
-    # make_eml() - attributes -------------------------------------------------
+    # make_eml() - attributes (data table) ------------------------------------
     #
     # An incomplete table attributes template will result in the corresponding
     # data table being dropped from further processing and the user alerted
@@ -584,6 +584,55 @@ validate_templates <- function(fun.name, x){
   }
   
 }
+
+
+
+
+
+
+
+
+
+
+#' Validate the abstract template
+#'
+#' @param x 
+#'     (list) The data and metadata object returned by 
+#'     \code{template_arguments()}.
+#'
+#' @return
+#'     \item{character}{Descriptions of any validation issues found}
+#'     \item{NULL}{If no issues were found}
+#'
+validate_abstract <- function(x) {
+  attr_tmp <- read_template_attributes()
+  missing_abstract <- !any(
+    stringr::str_detect(
+      names(x$template), 
+      attr_tmp$regexpr[attr_tmp$template_name == "abstract"]))
+  if (isTRUE(missing_abstract)) {
+    msg <- paste0(
+      "Missing abstract. An abstract describing the data is recommended ",
+      "and should briefly answer: What? Why? Where? When? How?")
+  }
+  
+  # FIXME: Report non-utf-8 encoded characters (generalize this function for 
+  # TextType templates)
+
+  if (exists("msg", inherits = FALSE)) {
+    msg <- paste0(
+      "\n",
+      "Abstract (Optional)\n",
+      paste(
+        paste0(seq_along(msg), ". "),
+        msg,
+        collapse = "\n"), 
+      "\n")
+    msg
+  }
+}
+
+
 
 
 

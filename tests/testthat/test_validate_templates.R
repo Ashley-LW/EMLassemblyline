@@ -17,13 +17,13 @@ testthat::test_that("abstract", {
     data.table = c("decomp.csv", "nitrogen.csv"),
     other.entity = c("ancillary_data.zip", "processing_and_analysis.R"))$x
   
-  # Warn if missing
+  # TODO: Update test (Warn if missing)
   
   x1 <- x
   x1$template$abstract.txt <- NULL
   expect_warning(
-    validate_templates("make_eml", x1),
-    regexp = "An abstract is recommended.")
+    validate_abstract("make_eml", x1),
+    regexp = "Missing abstract. An abstract describing the data is ")
   
 })
 
