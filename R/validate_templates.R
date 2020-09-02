@@ -33,7 +33,6 @@ validate_templates <- function(fun.name, x){
 
     r <- validate_abstract(x)
     issues <- c(issues, r)
-    browser()
     
     # make_eml() - additional_info --------------------------------------------
     
@@ -462,45 +461,18 @@ validate_templates <- function(fun.name, x){
     
     # make_eml() - intellectual_rights ----------------------------------------
     
-    # Missing
-    
-    missing_intellectual_rights <- !any(
-      stringr::str_detect(
-        names(x$template), 
-        attr_tmp$regexpr[attr_tmp$template_name == "intellectual_rights"]))
-    if (isTRUE(missing_intellectual_rights)) {
-      warning("An intellectual rights license is recommended.", call. = FALSE)
-    }
-    
-    # FIXME: Report non-utf-8 encoded characters (generalize this function for 
-    # TextType templates)
+    r <- validate_intellectual_rights(x)
+    issues <- c(issues, r)
     
     # make_eml() - keywords ---------------------------------------------------
     
-    # Missing
-    
-    missing_keywords <- !any(
-      stringr::str_detect(
-        names(x$template), 
-        attr_tmp$regexpr[attr_tmp$template_name == "keywords"]))
-    if (isTRUE(missing_keywords)) {
-      warning("Keywords are recommended.", call. = FALSE)
-    }
+    r <- validate_keywords(x)
+    issues <- c(issues, r)
     
     # make_eml() - methods ----------------------------------------------------
     
-    # Missing
-    
-    missing_methods <- !any(
-      stringr::str_detect(
-        names(x$template), 
-        attr_tmp$regexpr[attr_tmp$template_name == "methods"]))
-    if (isTRUE(missing_methods)) {
-      warning("Methods are recommended.", call. = FALSE)
-    }
-    
-    # FIXME: Report non-utf-8 encoded characters (generalize this function for 
-    # TextType templates)
+    r <- validate_methods(x)
+    issues <- c(issues, r)
     
     # make_eml() - personnel --------------------------------------------------
     
@@ -601,8 +573,14 @@ validate_templates <- function(fun.name, x){
 #'     \code{template_arguments()}.
 #'
 #' @return
-#'     \item{character}{Descriptions of any validation issues found}
+#'     \item{character}{Description of validation issues}
 #'     \item{NULL}{If no issues were found}
+#'     
+#' @details 
+#'     Checks performed by this function:
+#'     \itemize{
+#'         \item{Abstract is not empty}
+#'     }
 #'
 validate_abstract <- function(x) {
   attr_tmp <- read_template_attributes()
@@ -623,6 +601,153 @@ validate_abstract <- function(x) {
     msg <- paste0(
       "\n",
       "Abstract (Optional)\n",
+      paste(
+        paste0(seq_along(msg), ". "),
+        msg,
+        collapse = "\n"), 
+      "\n")
+    msg
+  }
+}
+
+
+
+
+
+
+
+
+#' Validate the intellectual rights template
+#'
+#' @param x 
+#'     (list) The data and metadata object returned by 
+#'     \code{template_arguments()}.
+#'
+#' @return
+#'     \item{character}{Description of validation issues}
+#'     \item{NULL}{If no issues were found}
+#'     
+#' @details 
+#'     Checks performed by this function:
+#'     \itemize{
+#'         \item{Intellectual rights is not empty}
+#'     }
+#'
+validate_intellectual_rights <- function(x) {
+  attr_tmp <- read_template_attributes()
+  missing_intellectual_rights <- !any(
+    stringr::str_detect(
+      names(x$template), 
+      attr_tmp$regexpr[attr_tmp$template_name == "intellectual_rights"]))
+  if (isTRUE(missing_intellectual_rights)) {
+    msg <- paste0(
+      "Missing intellectual rights. An intellectual rights license is ",
+      "recommended.")
+  }
+  
+  # FIXME: Report non-utf-8 encoded characters (generalize this function for 
+  # TextType templates)
+  
+  if (exists("msg", inherits = FALSE)) {
+    msg <- paste0(
+      "\n",
+      "Intellectual rights (Optional)\n",
+      paste(
+        paste0(seq_along(msg), ". "),
+        msg,
+        collapse = "\n"), 
+      "\n")
+    msg
+  }
+}
+
+
+
+
+
+
+
+
+#' Validate the keywords template
+#'
+#' @param x 
+#'     (list) The data and metadata object returned by 
+#'     \code{template_arguments()}.
+#'
+#' @return
+#'     \item{character}{Description of validation issues}
+#'     \item{NULL}{If no issues were found}
+#'     
+#' @details 
+#'     Checks performed by this function:
+#'     \itemize{
+#'         \item{Keywords is not empty}
+#'     }
+#'
+validate_keywords <- function(x) {
+  attr_tmp <- read_template_attributes()
+  missing_keywords <- !any(
+    stringr::str_detect(
+      names(x$template), 
+      attr_tmp$regexpr[attr_tmp$template_name == "keywords"]))
+  if (isTRUE(missing_keywords)) {
+    msg <- paste0("Missing keywords. Keywords are recommended.")
+  }
+  if (exists("msg", inherits = FALSE)) {
+    msg <- paste0(
+      "\n",
+      "Keywords (Optional)\n",
+      paste(
+        paste0(seq_along(msg), ". "),
+        msg,
+        collapse = "\n"), 
+      "\n")
+    msg
+  }
+}
+
+
+
+
+
+
+
+
+#' Validate the methods template
+#'
+#' @param x 
+#'     (list) The data and metadata object returned by 
+#'     \code{template_arguments()}.
+#'
+#' @return
+#'     \item{character}{Description of validation issues}
+#'     \item{NULL}{If no issues were found}
+#'     
+#' @details 
+#'     Checks performed by this function:
+#'     \itemize{
+#'         \item{Methods is not empty}
+#'     }
+#'
+validate_methods <- function(x) {
+  attr_tmp <- read_template_attributes()
+  missing_methods <- !any(
+    stringr::str_detect(
+      names(x$template), 
+      attr_tmp$regexpr[attr_tmp$template_name == "methods"]))
+  if (isTRUE(missing_methods)) {
+    msg <- paste0(
+      "Missing methods. Methods are recommended and should describe (in ",
+      "detail) how the data were created.")
+  }
+
+  # FIXME: Report non-utf-8 encoded characters (generalize this function for 
+  # TextType templates)
+  
+  if (exists("msg", inherits = FALSE)) {
+    msg <- paste0(
+      "\n",
+      "Methods (Optional)\n",
       paste(
         paste0(seq_along(msg), ". "),
         msg,

@@ -17,13 +17,14 @@ testthat::test_that("abstract", {
     data.table = c("decomp.csv", "nitrogen.csv"),
     other.entity = c("ancillary_data.zip", "processing_and_analysis.R"))$x
   
-  # TODO: Update test (Warn if missing)
+  # Message if missing
   
   x1 <- x
   x1$template$abstract.txt <- NULL
-  expect_warning(
-    validate_abstract("make_eml", x1),
-    regexp = "Missing abstract. An abstract describing the data is ")
+  expect_true(
+    stringr::str_detect(
+      validate_abstract(x1),
+      "Missing abstract. An abstract describing the data is recommended "))
   
 })
 
@@ -303,13 +304,14 @@ testthat::test_that("intellectual_rights", {
     data.table = c("decomp.csv", "nitrogen.csv"),
     other.entity = c("ancillary_data.zip", "processing_and_analysis.R"))$x
   
-  # Warn if missing
+  # Message if missing
   
   x1 <- x
   x1$template$intellectual_rights.txt <- NULL
-  expect_warning(
-    validate_templates("make_eml", x1),
-    regexp = "An intellectual rights license is recommended.")
+  expect_true(
+    stringr::str_detect(
+      validate_intellectual_rights(x1),
+      "Missing intellectual rights. An intellectual rights license is "))
   
 })
 
@@ -329,13 +331,14 @@ testthat::test_that("keywords", {
     data.table = c("decomp.csv", "nitrogen.csv"),
     other.entity = c("ancillary_data.zip", "processing_and_analysis.R"))$x
   
-  # Warn if missing
+  # Message if missing
   
   x1 <- x
   x1$template$keywords.txt <- NULL
-  expect_warning(
-    validate_templates("make_eml", x1),
-    regexp = "Keywords are recommended.")
+  expect_true(
+    stringr::str_detect(
+      validate_keywords(x1),
+      "Missing keywords. Keywords are recommended."))
   
 })
 
@@ -355,13 +358,14 @@ testthat::test_that("methods", {
     data.table = c("decomp.csv", "nitrogen.csv"),
     other.entity = c("ancillary_data.zip", "processing_and_analysis.R"))$x
   
-  # Warn if missing
+  # Message if missing
   
   x1 <- x
   x1$template$methods.txt <- NULL
-  expect_warning(
-    validate_templates("make_eml", x1),
-    regexp = "Methods are recommended.")
+  expect_true(
+    stringr::str_detect(
+      validate_methods(x1),
+      "Missing methods. Methods are recommended and should describe \\(in "))
   
 })
 
@@ -443,3 +447,8 @@ testthat::test_that("remove_empty_templates()", {
   expect_true(is.null(x$template))
 
 })
+
+# validate_templates() --------------------------------------------------------
+
+# TODO: If multiple validation issues, then report all issues with a warning or 
+# error.
